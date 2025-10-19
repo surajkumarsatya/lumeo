@@ -1,0 +1,66 @@
+image: node:20
+
+stages:
+  - build
+  - lint
+  - deploy
+
+cache:
+  key: $CI_COMMIT_REF_SLUG
+  paths:
+    - node_modules/
+
+build:
+  stage: build
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 hour
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main")'
+
+lint:
+  stage: lint
+  script:
+    - npm ci
+    - npm run lint
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main")'
+
+deploy_staging:
+  stage: deploy
+  before_script:
+    - npm install -g wrangler
+  script:
+    - wrangler pages deploy dist --project-name=codx-frontend-prod --branch=develop
+  dependencies:
+    - build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+  when: manual
+  environment:
+    name: staging
+    url: https://staging.codxfiow.com
+
+deploy_production:
+  stage: deploy
+  before_script:
+    - npm install -g wrangler
+  script:
+    - wrangler pages deploy dist --project-name=codx-frontend-prod --branch=main
+  dependencies:
+    - build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  when: manual
+  environment:
+    name: production
+    # url: https://www.codxfiow.com

@@ -1,0 +1,28 @@
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+echo "${GREEN}[Husky] Starting pre-commit hook...${NC}"
+
+# 1. Run Prettier to format code
+echo "${GREEN}[Husky] Running Prettier to format files...${NC}"
+if npm run format; then
+  echo "${GREEN}[Husky] Prettier passed.${NC}"
+else
+  echo "${RED}[Husky] Prettier failed. Please review manually.${NC}"
+  exit 1
+fi
+
+# 2. Run ESLint to fix linting issues
+echo "${GREEN}[Husky] Running ESLint to fix linting issues...${NC}"
+if npm run lint:fix; then
+  echo "${GREEN}[Husky] ESLint passed.${NC}"
+else
+  echo "${RED}[Husky] ESLint failed. Please review manually.${NC}"
+  exit 1
+fi
+
+# IMPORTANT: Re-stage the files after both tools have modified them
+git add .
+
+echo "${GREEN}[Husky] Pre-commit hook passed.${NC}"
