@@ -1,0 +1,26 @@
+/* Light Theme Colors */
+@theme {
+  --color-light-text-primary: #000000;
+  --color-light-text-secondary: #00000040;
+  --color-light-text-tertiary: #00000040;
+  --color-light-text-quaternary: #00000020;
+  --color-light-text-inverse: #ffffff;
+
+  --color-light-bg-primary: rgba(255, 255, 255, 0.08);
+  --color-light-bg-secondary: #0e0e0e; /* Background 2 */
+  --color-light-bg-tertiary: #f5f5f5; /* Background 3 */
+  --color-light-bg-quaternary: #dee2e6;
+  --color-light-bg-overlay: rgba(0, 0, 0, 0.5);
+  --color-light-bg-glass: rgba(255, 255, 255, 0.8);
+
+  --color-light-border-primary: #e9ecef;
+  --color-light-border-secondary: #dee2e6;
+  --color-light-border-tertiary: #ced0da;
+
+  --color-light-icon-primary: #000000;
+  --color-light-icon-secondary: #00000040;
+  --color-light-icon-tertiary: #00000040;
+}
+
+/* Dark Theme Colors */
+/* ... */
