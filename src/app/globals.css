@@ -1,10 +1,10 @@
 @import 'tailwindcss';
-@import './theme/india/fonts.css';
+/* @import './theme/india/fonts.css';
 @import './theme/india/typography.css';
 @import './theme/india/colors.css';
 @import './theme/india/spacing.css';
 @import './theme/india/layout.css';
-@import './theme/india/theme-modes.css';
+@import './theme/india/theme-modes.css'; */
 
 body {
   margin: 0;
