@@ -9,9 +9,18 @@
 @import './theme/india/layout.css';
 @import './theme/india/theme-modes.css'; */
 
-body {
+/* * {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+} */
+
+* {
+  /* overflow-x: hidden; */
+}
+
+::-webkit-scrollbar {
+  display: none;
 }
 
 @theme inline {
@@ -128,4 +137,28 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+h1 {
+  font-size: 32px;
+}
+
+h2 {
+  font-size: 24px;
+}
+
+h3 {
+  font-size: 18px;
+}
+
+h4 {
+  font-size: 16px;
+}
+
+h5 {
+  font-size: 13px;
+}
+
+h6 {
+  font-size: 10px;
 }
