@@ -15,6 +15,15 @@ export default [
   // 1. Typescript Configuration
   ...tseslint.configs.recommended, // Loads recommended TS rules
 
+  // Configuration to disable the rule for the Next.js generated file.
+  {
+    files: ['next-env.d.ts'], // Target ONLY the file that is auto-generated
+    rules: {
+      // Disable the rule that conflicts with Next.js's generated code
+      '@typescript-eslint/triple-slash-reference': 'off',
+    },
+  },
+
   // 2. React Hooks Recommended Rules
   // FIX: Load the 'recommended' rules object from the reactHooksPlugin directly.
   {
