@@ -93,8 +93,8 @@ export default function MainContent() {
             </div>
           </div> */}
 
-          <div className="grid w-full">
-            <InputGroup>
+          <div className="grid border min-w-full max-w-100">
+            <InputGroup className="">
               <InputGroupTextarea placeholder="Ask, Search or Chat..." />
               <InputGroupAddon align="block-end" className="grid justify-end">
                 <InputGroupButton variant="default" className="rounded-full" size="icon-xs">
