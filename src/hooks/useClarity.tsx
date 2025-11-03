@@ -1,10 +1,11 @@
+// src/hooks/useClarity.ts
 import { useEffect } from 'react';
 import { injectClarity, removeClarity } from '../helpers/clarity';
 import config from '../config';
 
 export function useClarity(): void {
   useEffect(() => {
-    const projectId = ''; // Hardcoded as empty in the screenshot
+    const projectId = config.clarityId;
 
     if (config.enableClarity && projectId) {
       injectClarity(projectId);
@@ -13,7 +14,6 @@ export function useClarity(): void {
     }
 
     return () => {
-      // Cleanup function
       removeClarity();
     };
   }, []);

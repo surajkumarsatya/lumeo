@@ -82,7 +82,8 @@ export default function MainContent() {
               <Image src={logo} alt="logo" className=" mx-auto" width={100} height={100} />
             </div>
             <h1 className="font-semibold leading-tight">
-              Namaste, Suraj <br /> What's on <span className="text-purple-600">your mind ?</span>
+              Namaste, Suraj <br /> Whats on
+              <span className="text-purple-600">your mind ?</span>
             </h1>
           </div>
 

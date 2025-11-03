@@ -48,7 +48,7 @@ deploy_staging:
   when: manual
   environment:
     name: staging
-    url: https://staging.codxfiow.com
+    # url: https://staging.codxfiow.com
 
 deploy_production:
   stage: deploy
