@@ -29,7 +29,7 @@ import { InputGroupButton, InputGroupTextarea } from '@/components/ui/input-grou
 import { ArrowUpIcon } from 'lucide-react';
 
 import { IoSearchSharp } from 'react-icons/io5';
-import logo from '../../../public/images/LumenoLogo.svg';
+import logo from '../../../public/images/nexlLogo.svg';
 import Image from 'next/image';
 import ExampleText from '../ExampleText/ExampleText';
 
@@ -77,14 +77,17 @@ export default function MainContent() {
 
       <div className="flex flex-col items-center justify-center mx-auto flex-1">
         <div className="flex flex-col gap-10 items-center w-[70%] mx-auto justify-center">
-          <div className="text-center">
+          <div className="text-right">
             <div className="">
-              <Image src={logo} alt="logo" className=" mx-auto" width={100} height={100} />
+              <Image src={logo} alt="logo" className=" mx-auto" width={150} height={100} />
             </div>
-            <h1 className="font-semibold leading-tight">
-              Namaste, Suraj <br /> Whats on
-              <span className="text-purple-600">your mind ?</span>
+            <h1 className="leading-tight">
+              Meet the <span className="font-bold">nex</span>t <span className="font-bold">l</span>
+              evel of intelligence
             </h1>
+            <h2 className="text-purple-600 italic ">
+              Think next. Think <span className="font-bold">nexl</span>.
+            </h2>
           </div>
 
           {/* <div className="grid w-full gap-2">
