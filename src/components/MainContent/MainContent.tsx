@@ -79,7 +79,7 @@ export default function MainContent() {
         <div className="flex flex-col gap-10 items-center w-[70%] mx-auto justify-center">
           <div className="text-right">
             <div className="">
-              <Image src={logo} alt="logo" className=" mx-auto" width={150} height={100} />
+              <Image src={logo} alt="logo" className=" mx-auto" width={150} />
             </div>
             <h1 className="leading-tight">
               Meet the <span className="font-bold">nex</span>t <span className="font-bold">l</span>
