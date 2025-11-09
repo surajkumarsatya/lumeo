@@ -82,12 +82,13 @@ export default function MainContent() {
               <Image src={logo} alt="logo" className=" mx-auto" width={150} />
             </div>
             <h1 className="leading-tight">
-              Meet the <span className="font-bold">nex</span>t <span className="font-bold">l</span>
+              Meet the <span className="font-bold text-purple-700">nex</span>t{' '}
+              <span className="font-bold text-purple-700">l</span>
               evel of intelligence
             </h1>
-            <h2 className="text-purple-600 italic ">
+            <h4 className="text-purple-600 uppercase tracking-widest">
               Think next. Think <span className="font-bold">nexl</span>.
-            </h2>
+            </h4>
           </div>
 
           {/* <div className="grid w-full gap-2">
@@ -97,11 +98,15 @@ export default function MainContent() {
             </div>
           </div> */}
 
-          <div className="grid border min-w-full max-w-100">
+          <div className="grid min-w-full max-w-100">
             <InputGroup className="">
               <InputGroupTextarea placeholder="Ask, Search or Chat..." />
               <InputGroupAddon align="block-end" className="grid justify-end">
-                <InputGroupButton variant="default" className="rounded-full" size="icon-xs">
+                <InputGroupButton
+                  variant="default"
+                  className="rounded-full bg-purple-700"
+                  size="icon-xs"
+                >
                   <ArrowUpIcon />
                   <span className="sr-only">Send</span>
                 </InputGroupButton>
