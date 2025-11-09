@@ -2,8 +2,8 @@
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
-/* @import './theme/india/fonts.css';
-@import './theme/india/typography.css';
+@import '../../src/theme/india/fonts.css';
+/* @import './theme/india/typography.css';
 @import './theme/india/colors.css';
 @import './theme/india/spacing.css';
 @import './theme/india/layout.css';
@@ -15,8 +15,8 @@
   box-sizing: border-box;
 } */
 
-* {
-  /* overflow-x: hidden; */
+body {
+  font-family: 'Geist', sans-serif;
 }
 
 ::-webkit-scrollbar {

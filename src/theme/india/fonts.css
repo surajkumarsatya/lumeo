@@ -1,25 +1,71 @@
+/* Thin - Weight 100 */
 @font-face {
-  font-family: 'PolySans-Bulky';
-  src: url('../../assets/fonts/polysansatrial-bulky.otf') format('opentype');
+  font-family: 'Geist';
+  src: url('../../assets/fonts/Geist/Geist-Thin.ttf') format('opentype');
+  font-weight: 100;
   font-display: swap;
 }
 
+/* ExtraLight - Weight 200 */
 @font-face {
-  font-family: 'PolySans-BulkyMono';
-  src: url('../../assets/fonts/polysansatrial-bulkymono.otf') format('opentype');
+  font-family: 'Geist';
+  src: url('../../assets/fonts/Geist/Geist-ExtraLight.ttf') format('opentype');
+  font-weight: 200;
   font-display: swap;
 }
 
+/* Light - Weight 300 */
 @font-face {
-  font-family: 'PolySans-BulkyWide';
-  src: url('../../assets/fonts/polysansatrial-bulkywide.otf') format('opentype');
+  font-family: 'Geist';
+  src: url('../../assets/fonts/Geist/Geist-Light.ttf') format('opentype');
+  font-weight: 300;
   font-display: swap;
 }
 
+/* Regular - Weight 400 (or normal) */
 @font-face {
-  font-family: 'PolySans-Median';
-  src: url('../../assets/fonts/polysansatrial-median.otf') format('opentype');
+  font-family: 'Geist';
+  src: url('../../assets/fonts/Geist/Geist-Regular.ttf') format('opentype');
+  font-weight: 400;
   font-display: swap;
 }
 
-/* ... */
+/* Medium - Weight 500 */
+@font-face {
+  font-family: 'Geist';
+  src: url('../../assets/fonts/Geist/Geist-Medium.ttf') format('opentype');
+  font-weight: 500;
+  font-display: swap;
+}
+
+/* SemiBold - Weight 600 */
+@font-face {
+  font-family: 'Geist';
+  src: url('../../assets/fonts/Geist/Geist-SemiBold.ttf') format('opentype');
+  font-weight: 600;
+  font-display: swap;
+}
+
+/* Bold - Weight 700 (or bold) */
+@font-face {
+  font-family: 'Geist';
+  src: url('../../assets/fonts/Geist/Geist-Bold.ttf') format('opentype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* ExtraBold - Weight 800 */
+@font-face {
+  font-family: 'Geist';
+  src: url('../../assets/fonts/Geist/Geist-ExtraBold.ttf') format('opentype');
+  font-weight: 800;
+  font-display: swap;
+}
+
+/* Black - Weight 900 */
+@font-face {
+  font-family: 'Geist';
+  src: url('../../assets/fonts/Geist/Geist-Black.ttf') format('opentype');
+  font-weight: 900;
+  font-display: swap;
+}
