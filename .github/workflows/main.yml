@@ -1,6 +1,5 @@
 name: CI/CD for Next.js (Cloudflare Pages)
 
-# 1. Triggers (Equivalent to GitLab 'rules' on a global level)
 on:
   push:
     branches:
@@ -10,102 +9,137 @@ on:
     branches:
       - main
       - develop
-  workflow_dispatch: # Allows manual trigger
+  workflow_dispatch: # manual trigger
 
-# 2. Define Variables and Environment
 env:
   NODE_VERSION: 20
+  ARTIFACT_NAME: build-artifact
 
-# 3. Define Jobs (Equivalent to GitLab stages and jobs)
 jobs:
-  # --- CI STAGE: BUILD ---
+  # --------------------
+  # BUILD
+  # --------------------
   build:
-    name: Build Project
+    name: Build
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # Set up Node.js with a specific version
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm' # Configures npm cache
-
-      # Install dependencies (npm ci for clean install) and run build
-      - name: Install Dependencies and Build
-        run: |
-          npm ci
-          npm run build
-
-      # Save the build artifacts (.next/ and dist/ folder) for later jobs
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifact
-          path: .next/ # Assuming 'npm run build' generates the files in .next/
-
-  # --- CI STAGE: LINT (Can run in parallel with build, or depend on it) ---
-  lint:
-    name: Lint Code
-    runs-on: ubuntu-latest
-    # This job can run at the same time as build
-    steps:
-      - uses: actions/checkout@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      - name: Install Dependencies and Run Lint
+
+      - name: Install dependencies & build
         run: |
           npm ci
-          npm run lint # Assumes lint is defined in package.json
-    # Only run lint on main/develop branch pushes or PRs targeting them
-    if: |
-      github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || 
-      github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'develop')
+          npm run build
 
-  # --- CD STAGE: DEPLOY (Cloudflare Pages) ---
-  deploy:
-    name: Deploy to Cloudflare Pages
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            dist/
+            .next/
+          retention-days: 1
+
+  # --------------------
+  # LINT
+  # --------------------
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    needs: [build] # Wait for the build job to complete
 
     steps:
-      # Download the artifact created in the 'build' job
-      - name: Download Build Artifact
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install & run linter
+        run: |
+          npm ci
+          npm run lint
+
+    # Run only for pushes to main/develop or PRs targeting them (mirrors your GitLab rules)
+    if: >
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'))
+      || (github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'develop'))
+
+  # --------------------
+  # DEPLOY: STAGING (Cloudflare Pages action)
+  # Runs on develop pushes OR PRs targeting main (matching your GitLab rules)
+  # --------------------
+  deploy_staging:
+    name: Deploy (Staging)
+    runs-on: ubuntu-latest
+    needs: [build, lint]
+
+    if: >
+      github.ref == 'refs/heads/develop'
+      || (github.event_name == 'pull_request' && github.base_ref == 'main')
+
+    environment:
+      name: staging
+      url: https://staging.nexl.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: build-artifact
-          path: .
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ./artifact/
 
-      # Cloudflare Pages deployment action (replaces 'npm install -g wrangler' and 'wrangler pages deploy')
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Pages (staging)
         uses: cloudflare/pages-action@v1
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }} # Secret token for authentication
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }} # Cloudflare Account ID
-          projectName: codx-frontend-prod
-          directory: . # The directory containing the .next/ and other built files
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: nexl
+          directory: ./artifact/dist
+          branch: develop
 
-      # Conditional Deployment Rules (Translating your GitLab rules)
-      - name: Set Deployment Branch
-        id: branch_name
-        run: |
-          if [ "${{ github.ref_name }}" == "develop" ]; then
-            echo "branch=develop" >> $GITHUB_OUTPUT
-            echo "environment=staging" >> $GITHUB_OUTPUT
-            echo "manual_deploy=false" >> $GITHUB_OUTPUT # Can be automated
-          elif [ "${{ github.ref_name }}" == "main" ]; then
-            echo "branch=main" >> $GITHUB_OUTPUT
-            echo "environment=production" >> $GITHUB_OUTPUT
-            echo "manual_deploy=true" >> $GITHUB_OUTPUT # Manual trigger for production
-          fi
+  # --------------------
+  # DEPLOY: PRODUCTION (Cloudflare Pages action)
+  # Runs only on pushes to main (mirrors your GitLab rule)
+  # --------------------
+  deploy_production:
+    name: Deploy (Production)
+    runs-on: ubuntu-latest
+    needs: [build, lint]
 
-    # Conditional deployment based on branch (GitHub Actions handles manual deployments differently)
+    if: github.ref == 'refs/heads/main'
+
     environment:
-      name: ${{ steps.branch_name.outputs.environment }}
+      name: production
+      url: https://www.nexl.com
 
-    # Run only on specific branches
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ./artifact/
+
+      - name: Deploy to Cloudflare Pages (production)
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: nexl
+          directory: ./artifact/dist
+          branch: main
