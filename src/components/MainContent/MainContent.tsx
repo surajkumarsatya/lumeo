@@ -87,7 +87,7 @@ export default function MainContent() {
               evel of intelligence
             </h1>
             <h4 className="text-purple-600 uppercase tracking-widest">
-              Think next. Think <span className="font-bold">nexl</span>.
+              Think dext. Think <span className="font-bold">dexl</span>.
             </h4>
           </div>
 
