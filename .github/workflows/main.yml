@@ -36,23 +36,26 @@ jobs:
       - name: Install dependencies & build
         run: |
           npm ci
+          # Assuming 'npm run build' executes 'next build'
           npm run build
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
+          # Ensure both the primary Next.js output (.next) and any custom output (dist) are uploaded
           path: |
             dist/
             .next/
           retention-days: 1
 
   # --------------------
-  # LINT
+  # LINT (Runs on all triggers for immediate feedback)
   # --------------------
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    # The restrictive 'if' condition was removed. Linting runs on every push/PR.
 
     steps:
       - name: Checkout repository
@@ -69,14 +72,9 @@ jobs:
           npm ci
           npm run lint
 
-    # Run only for pushes to master/develop or PRs targeting them (mirrors your GitLab rules)
-    if: >
-      (github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'))
-      || (github.event_name == 'pull_request' && (github.base_ref == 'master' || github.base_ref == 'develop'))
-
   # --------------------
   # DEPLOY: STAGING (Cloudflare Pages action)
-  # Runs on develop pushes OR PRs targeting master (matching your GitLab rules)
+  # Runs on develop pushes OR PRs targeting master (preview deployments)
   # --------------------
   deploy_staging:
     name: Deploy (Staging)
@@ -92,9 +90,6 @@ jobs:
       url: https://staging.nexl.dev
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
@@ -107,12 +102,14 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: nexl
-          directory: ./artifact/dist
+          # CORRECTED: Deployment directory points to the artifact root (./artifact/)
+          # so the Cloudflare adapter can find the critical '.next' folder.
+          directory: ./artifact/
           branch: develop
 
   # --------------------
   # DEPLOY: PRODUCTION (Cloudflare Pages action)
-  # Runs only on pushes to master (mirrors your GitLab rule)
+  # Runs only on pushes to master
   # --------------------
   deploy_production:
     name: Deploy (Production)
@@ -126,9 +123,6 @@ jobs:
       url: https://nexl.dev
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
@@ -141,5 +135,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: nexl
-          directory: ./artifact/dist
+          # CORRECTED: Deployment directory points to the artifact root (./artifact/)
+          directory: ./artifact/
           branch: master
