@@ -38,12 +38,11 @@ jobs:
           npm ci
           npm run build
 
-      - name: Verify build output
+      - name: Verify .next directory
         run: |
-          echo "Checking build directories..."
-          ls -la
-          if [ -d ".next" ]; then 
+          if [ -d ".next" ]; then
             echo "✓ .next directory exists"
+            echo "Contents:"
             ls -la .next/
           else
             echo "✗ .next directory not found!"
@@ -55,7 +54,6 @@ jobs:
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: .next/
-          if-no-files-found: error
           retention-days: 1
 
   # --------------------
@@ -107,6 +105,18 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
           path: .next/
 
+      - name: Verify downloaded artifact
+        run: |
+          echo "Contents of current directory:"
+          ls -la
+          if [ -d ".next" ]; then
+            echo "✓ .next directory exists after download"
+            ls -la .next/
+          else
+            echo "✗ .next directory not found after download!"
+            exit 1
+          fi
+
       - name: Deploy to Cloudflare Pages (staging)
         uses: cloudflare/pages-action@v1
         with:
@@ -140,6 +150,18 @@ jobs:
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: .next/
+
+      - name: Verify downloaded artifact
+        run: |
+          echo "Contents of current directory:"
+          ls -la
+          if [ -d ".next" ]; then
+            echo "✓ .next directory exists after download"
+            ls -la .next/
+          else
+            echo "✗ .next directory not found after download!"
+            exit 1
+          fi
 
       - name: Deploy to Cloudflare Pages (production)
         uses: cloudflare/pages-action@v1
