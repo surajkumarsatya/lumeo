@@ -73,8 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nextjs-build
-          # path: .next
-          path: .vercel/output/static
+          path: .next
           retention-days: 1
 
   # --------------------
@@ -84,7 +83,7 @@ jobs:
     name: Deploy (Staging)
     runs-on: ubuntu-latest
     needs: [build, lint]
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
 
     environment:
       name: staging
@@ -98,8 +97,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nextjs-build
-          # path: .next
-          path: .vercel/output/static
+          path: .next
 
       - name: Verify downloaded build
         run: |
@@ -117,8 +115,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: nexl
-          # directory: .next
-          directory: .vercel/output/static
+          directory: .next
           branch: develop
 
   # --------------------
@@ -128,7 +125,7 @@ jobs:
     name: Deploy (Production)
     runs-on: ubuntu-latest
     needs: [build, lint]
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     environment:
       name: production
