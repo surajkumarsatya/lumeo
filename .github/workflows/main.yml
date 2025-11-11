@@ -9,20 +9,39 @@ on:
     branches:
       - master
       - develop
-  workflow_dispatch: # manual trigger
+  workflow_dispatch:
 
 env:
   NODE_VERSION: 20
-  ARTIFACT_NAME: build-artifact
 
 jobs:
   # --------------------
-  # BUILD
+  # LINT
+  # --------------------
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install & run linter
+        run: |
+          npm ci
+          npm run lint
+
+  # --------------------
+  # BUILD (shared helper job if you want; optional)
   # --------------------
   build:
     name: Build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -42,51 +61,19 @@ jobs:
         run: |
           if [ -d ".next" ]; then
             echo "✓ .next directory exists"
-            echo "Contents:"
             ls -la .next/
           else
             echo "✗ .next directory not found!"
             exit 1
           fi
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: .next/
-          retention-days: 1
-
   # --------------------
-  # LINT (Runs on all triggers for immediate feedback)
-  # --------------------
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install & run linter
-        run: |
-          npm ci
-          npm run lint
-
-  # --------------------
-  # DEPLOY: STAGING (Cloudflare Pages action)
-  # Runs on develop pushes OR PRs targeting master (preview deployments)
+  # DEPLOY: STAGING
   # --------------------
   deploy_staging:
     name: Deploy (Staging)
     runs-on: ubuntu-latest
     needs: [build, lint]
-
     if: >
       github.ref == 'refs/heads/develop'
       || (github.event_name == 'pull_request' && github.base_ref == 'master')
@@ -99,21 +86,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: .next/
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-      - name: Verify downloaded artifact
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify .next
         run: |
-          echo "Contents of current directory:"
-          ls -la
           if [ -d ".next" ]; then
-            echo "✓ .next directory exists after download"
+            echo "✓ .next present"
             ls -la .next/
           else
-            echo "✗ .next directory not found after download!"
+            echo "✗ .next missing"
             exit 1
           fi
 
@@ -123,18 +114,16 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: nexl
-          directory: ./
+          directory: .next
           branch: develop
 
   # --------------------
-  # DEPLOY: PRODUCTION (Cloudflare Pages action)
-  # Runs only on pushes to master
+  # DEPLOY: PRODUCTION
   # --------------------
   deploy_production:
     name: Deploy (Production)
     runs-on: ubuntu-latest
     needs: [build, lint]
-
     if: github.ref == 'refs/heads/master'
 
     environment:
@@ -145,21 +134,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: .next/
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-      - name: Verify downloaded artifact
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify .next
         run: |
-          echo "Contents of current directory:"
-          ls -la
           if [ -d ".next" ]; then
-            echo "✓ .next directory exists after download"
+            echo "✓ .next present"
             ls -la .next/
           else
-            echo "✗ .next directory not found after download!"
+            echo "✗ .next missing"
             exit 1
           fi
 
@@ -169,5 +162,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: nexl
-          directory: ./
+          directory: .next
           branch: master
