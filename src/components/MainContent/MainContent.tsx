@@ -89,7 +89,7 @@ export default function MainContent() {
             <h4 className="text-purple-600 uppercase tracking-widest">
               Think dexttt. Think <span className="font-bold">dexlll</span>.
             </h4>
-            <p>Hello how are you ?</p>
+            <p>I am fine ?</p>
           </div>
 
           {/* <div className="grid w-full gap-2">
