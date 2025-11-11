@@ -73,7 +73,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nextjs-build
-          path: .next
+          # path: .next
+          path: .vercel/output/static
           retention-days: 1
 
   # --------------------
@@ -97,7 +98,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nextjs-build
-          path: .next
+          # path: .next
+          path: .vercel/output/static
 
       - name: Verify downloaded build
         run: |
@@ -115,7 +117,8 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: nexl
-          directory: .next
+          # directory: .next
+          directory: .vercel/output/static
           branch: develop
 
   # --------------------
