@@ -9,54 +9,18 @@ on:
     branches:
       - master
       - develop
-  workflow_dispatch: # manual trigger
+  workflow_dispatch:
 
 env:
   NODE_VERSION: 20
-  ARTIFACT_NAME: build-artifact
 
 jobs:
   # --------------------
-  # BUILD
-  # --------------------
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies & build
-        run: |
-          npm ci
-          # Assuming 'npm run build' executes 'next build'
-          npm run build
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          # Ensure both the primary Next.js output (.next) and any custom output (dist) are uploaded
-          path: |
-            dist/
-            .next/
-          retention-days: 1
-
-  # --------------------
-  # LINT (Runs on all triggers for immediate feedback)
+  # LINT
   # --------------------
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    # The restrictive 'if' condition was removed. Linting runs on every push/PR.
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -73,14 +37,43 @@ jobs:
           npm run lint
 
   # --------------------
-  # DEPLOY: STAGING (Cloudflare Pages action)
-  # Runs on develop pushes OR PRs targeting master (preview deployments)
+  # BUILD (shared helper job if you want; optional)
+  # --------------------
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Verify .next directory
+        run: |
+          if [ -d ".next" ]; then
+            echo "✓ .next directory exists"
+            ls -la .next/
+          else
+            echo "✗ .next directory not found!"
+            exit 1
+          fi
+
+  # --------------------
+  # DEPLOY: STAGING
   # --------------------
   deploy_staging:
     name: Deploy (Staging)
     runs-on: ubuntu-latest
     needs: [build, lint]
-
     if: >
       github.ref == 'refs/heads/develop'
       || (github.event_name == 'pull_request' && github.base_ref == 'master')
@@ -90,11 +83,30 @@ jobs:
       url: https://staging.nexl.dev
 
     steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: ./artifact/
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify .next
+        run: |
+          if [ -d ".next" ]; then
+            echo "✓ .next present"
+            ls -la .next/
+          else
+            echo "✗ .next missing"
+            exit 1
+          fi
 
       - name: Deploy to Cloudflare Pages (staging)
         uses: cloudflare/pages-action@v1
@@ -102,20 +114,16 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: nexl
-          # CORRECTED: Deployment directory points to the artifact root (./artifact/)
-          # so the Cloudflare adapter can find the critical '.next' folder.
-          directory: ./artifact/
+          directory: .next
           branch: develop
 
   # --------------------
-  # DEPLOY: PRODUCTION (Cloudflare Pages action)
-  # Runs only on pushes to master
+  # DEPLOY: PRODUCTION
   # --------------------
   deploy_production:
     name: Deploy (Production)
     runs-on: ubuntu-latest
     needs: [build, lint]
-
     if: github.ref == 'refs/heads/master'
 
     environment:
@@ -123,11 +131,30 @@ jobs:
       url: https://nexl.dev
 
     steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: ./artifact/
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify .next
+        run: |
+          if [ -d ".next" ]; then
+            echo "✓ .next present"
+            ls -la .next/
+          else
+            echo "✗ .next missing"
+            exit 1
+          fi
 
       - name: Deploy to Cloudflare Pages (production)
         uses: cloudflare/pages-action@v1
@@ -135,6 +162,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: nexl
-          # CORRECTED: Deployment directory points to the artifact root (./artifact/)
-          directory: ./artifact/
+          directory: .next
           branch: master
