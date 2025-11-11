@@ -76,7 +76,6 @@ jobs:
     needs: [build, lint]
     if: >
       github.ref == 'refs/heads/develop'
-      || (github.event_name == 'pull_request' && github.base_ref == 'master')
 
     environment:
       name: staging

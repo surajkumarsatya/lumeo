@@ -84,7 +84,7 @@ export default function MainContent() {
             <h1 className="leading-tight">
               Meet the <span className="font-bold text-purple-700">nex</span>t{' '}
               <span className="font-bold text-purple-700">l</span>
-              evel of intelligence
+              evel of intelligence Hi I am Suraj
             </h1>
             <h4 className="text-purple-600 uppercase tracking-widest">
               Think dexttt. Think <span className="font-bold">dexlll</span>.
