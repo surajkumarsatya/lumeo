@@ -31,13 +31,14 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install & run linter
-        run: |
-          npm ci
-          npm run lint
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
 
   # --------------------
-  # BUILD (shared helper job if you want; optional)
+  # BUILD (once, shared)
   # --------------------
   build:
     name: Build
@@ -52,10 +53,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies & build
-        run: |
-          npm ci
-          npm run build
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js
+        run: npm run build
 
       - name: Verify .next directory
         run: |
@@ -67,6 +69,13 @@ jobs:
             exit 1
           fi
 
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build
+          path: .next
+          retention-days: 1
+
   # --------------------
   # DEPLOY: STAGING
   # --------------------
@@ -74,9 +83,7 @@ jobs:
     name: Deploy (Staging)
     runs-on: ubuntu-latest
     needs: [build, lint]
-    if: >
-      github.ref == 'refs/heads/develop'
-      || (github.event_name == 'pull_request' && github.base_ref == 'develop')
+    if: github.ref == 'refs/heads/develop'
 
     environment:
       name: staging
@@ -86,25 +93,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          name: nextjs-build
+          path: .next
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Verify .next
+      - name: Verify downloaded build
         run: |
           if [ -d ".next" ]; then
-            echo "✓ .next present"
+            echo "✓ .next artifact downloaded successfully"
             ls -la .next/
           else
-            echo "✗ .next missing"
+            echo "✗ .next artifact missing!"
             exit 1
           fi
 
@@ -134,25 +135,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          name: nextjs-build
+          path: .next
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Verify .next
+      - name: Verify downloaded build
         run: |
           if [ -d ".next" ]; then
-            echo "✓ .next present"
+            echo "✓ .next artifact downloaded successfully"
             ls -la .next/
           else
-            echo "✗ .next missing"
+            echo "✗ .next artifact missing!"
             exit 1
           fi
 
