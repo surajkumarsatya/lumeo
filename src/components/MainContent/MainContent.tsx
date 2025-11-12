@@ -29,7 +29,7 @@ import { InputGroupButton, InputGroupTextarea } from '@/components/ui/input-grou
 import { ArrowUpIcon } from 'lucide-react';
 
 import { IoSearchSharp } from 'react-icons/io5';
-import logo from '../../../public/images/nexlLogo.svg';
+// import logo from '../../../public/images/nexlLogo.svg';
 import Image from 'next/image';
 import ExampleText from '../ExampleText/ExampleText';
 
@@ -79,7 +79,12 @@ export default function MainContent() {
         <div className="flex flex-col gap-10 items-center w-[70%] mx-auto justify-center">
           <div className="text-right">
             <div className="">
-              <Image src={logo} alt="logo" className=" mx-auto" width={150} />
+              <Image
+                src="../../../public/images/nexlLogo.svg"
+                alt="logo"
+                className=" mx-auto"
+                width={150}
+              />
             </div>
             <h1 className="leading-tight">
               Meet the <span className="font-bold text-purple-700">nex</span>t{' '}
