@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Cloudflare Pages
+name: CI/CD Pipeline - Cloudflare Pages (Dual Projects)
 
 on:
   push:
@@ -13,7 +13,6 @@ on:
 
 env:
   NODE_VERSION: '22.19.0'
-  NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_GEMINI_API_KEY }}
 
 jobs:
   # --------------------
@@ -88,7 +87,7 @@ jobs:
           if-no-files-found: error
 
   # --------------------
-  # DEPLOY TO STAGING
+  # DEPLOY TO STAGING PROJECT
   # --------------------
   deploy-staging:
     name: 🚀 Deploy to Staging
@@ -121,30 +120,26 @@ jobs:
             exit 1
           fi
 
-      - name: 🚀 Deploy to Cloudflare Pages (Staging)
+      - name: 🚀 Deploy to Cloudflare Pages (Staging Project)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy out --project-name=nexl --branch=staging
+          command: pages deploy out --project-name=nexl-staging --branch=staging
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      - name: 📝 Comment on PR (if applicable)
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ Staging deployment successful!\n\n🔗 Preview URL: https://staging.nexl.dev'
-            })
+      - name: 💬 Deployment Summary
+        run: |
+          echo "### 🚀 Staging Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Staging URL:** https://staging.nexl.dev" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **Branch:** staging" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status:** Deployed to nexl-staging project" >> $GITHUB_STEP_SUMMARY
 
   # --------------------
-  # DEPLOY TO PRODUCTION
+  # DEPLOY TO PRODUCTION PROJECT
   # --------------------
   deploy-production:
     name: 🚀 Deploy to Production
@@ -177,18 +172,26 @@ jobs:
             exit 1
           fi
 
-      - name: 🚀 Deploy to Cloudflare Pages (Production)
+      - name: 🚀 Deploy to Cloudflare Pages (Production Project)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy out --project-name=nexl --branch=main
+          command: pages deploy out --project-name=nexl-production --branch=main
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
+      - name: 💬 Deployment Summary
+        run: |
+          echo "### 🚀 Production Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Production URL:** https://nexl.dev" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **Branch:** main" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status:** Deployed to nexl-production project" >> $GITHUB_STEP_SUMMARY
+
   # --------------------
-  # PR PREVIEW DEPLOYMENTS
+  # PR PREVIEW DEPLOYMENTS (to staging project)
   # --------------------
   deploy-preview:
     name: 🔍 Deploy PR Preview
@@ -212,7 +215,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy out --project-name=nexl --branch=preview-${{ github.event.pull_request.number }}
+          command: pages deploy out --project-name=nexl-staging --branch=pr-${{ github.event.pull_request.number }}
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -221,10 +224,21 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const previewUrl = `https://preview-${{ github.event.pull_request.number }}.nexl.pages.dev`;
+            const prNumber = context.issue.number;
+            const previewUrl = `https://pr-${prNumber}.nexl-staging.pages.dev`;
+
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: prNumber,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## 🔍 Preview Deployment\n\n✅ Your preview is ready!\n\n🔗 **Preview URL:** ${previewUrl}\n\n*This preview will be updated with every commit to this PR.*`
-            })
+              body: `## 🔍 Preview Deployment
+
+# ✅ Your preview is ready!
+
+# 🔗 **Preview URL:** ${previewUrl}
+
+# 📦 **Branch:** \`${context.payload.pull_request.head.ref}\`
+# 🏗️ **Commit:** \`${context.payload.pull_request.head.sha.substring(0, 7)}\`
+
+# *This preview will be updated with every commit to this PR.*`
+#             })
