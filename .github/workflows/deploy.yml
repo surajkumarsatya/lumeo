@@ -1,0 +1,244 @@
+name: CI/CD Pipeline - Cloudflare Pages (Dual Projects)
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  pull_request:
+    branches:
+      - main
+      - staging
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22.19.0'
+
+jobs:
+  # --------------------
+  # CODE QUALITY CHECKS
+  # --------------------
+  quality-checks:
+    name: Code Quality & Type Checking
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Run ESLint
+        run: npm run lint
+
+      - name: 🎯 Run TypeScript type checking
+        run: npx tsc --noEmit
+
+  # --------------------
+  # BUILD
+  # --------------------
+  build:
+    name: Build Next.js
+    runs-on: ubuntu-latest
+    needs: quality-checks
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🏗️ Build Next.js (Static Export)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_GEMINI_API_KEY: ${{ secrets.NEXT_PUBLIC_GEMINI_API_KEY }}
+
+      - name: ✅ Verify out directory
+        run: |
+          if [ -d "out" ]; then
+            echo "✓ Static export successful - out directory exists"
+            ls -la out/
+            echo "Total files: $(find out -type f | wc -l)"
+          else
+            echo "✗ Static export failed - out directory not found!"
+            exit 1
+          fi
+
+      - name: 📤 Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-static-export
+          path: out
+          retention-days: 1
+          if-no-files-found: error
+
+  # --------------------
+  # DEPLOY TO STAGING PROJECT
+  # --------------------
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
+
+    environment:
+      name: staging
+      url: https://staging.nexl.dev
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-static-export
+          path: out
+
+      - name: ✅ Verify build artifact
+        run: |
+          if [ -d "out" ]; then
+            echo "✓ Build artifact downloaded successfully"
+            ls -la out/
+            echo "Files ready for deployment: $(find out -type f | wc -l)"
+          else
+            echo "✗ Build artifact missing!"
+            exit 1
+          fi
+
+      - name: 🚀 Deploy to Cloudflare Pages (Staging Project)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy out --project-name=nexl-staging --branch=staging
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: 💬 Deployment Summary
+        run: |
+          echo "### 🚀 Staging Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Staging URL:** https://staging.nexl.dev" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **Branch:** staging" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status:** Deployed to nexl-staging project" >> $GITHUB_STEP_SUMMARY
+
+  # --------------------
+  # DEPLOY TO PRODUCTION PROJECT
+  # --------------------
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    environment:
+      name: production
+      url: https://nexl.dev
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-static-export
+          path: out
+
+      - name: ✅ Verify build artifact
+        run: |
+          if [ -d "out" ]; then
+            echo "✓ Build artifact downloaded successfully"
+            ls -la out/
+            echo "Files ready for deployment: $(find out -type f | wc -l)"
+          else
+            echo "✗ Build artifact missing!"
+            exit 1
+          fi
+
+      - name: 🚀 Deploy to Cloudflare Pages (Production Project)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy out --project-name=nexl-production --branch=main
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: 💬 Deployment Summary
+        run: |
+          echo "### 🚀 Production Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Production URL:** https://nexl.dev" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **Branch:** main" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status:** Deployed to nexl-production project" >> $GITHUB_STEP_SUMMARY
+
+  # --------------------
+  # PR PREVIEW DEPLOYMENTS (to staging project)
+  # --------------------
+  deploy-preview:
+    name: 🔍 Deploy PR Preview
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-static-export
+          path: out
+
+      - name: 🚀 Deploy Preview to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy out --project-name=nexl-staging --branch=pr-${{ github.event.pull_request.number }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: 📝 Comment Preview URL on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            const previewUrl = `https://pr-${prNumber}.nexl-staging.pages.dev`;
+
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔍 Preview Deployment
+
+# ✅ Your preview is ready!
+
+# 🔗 **Preview URL:** ${previewUrl}
+
+# 📦 **Branch:** \`${context.payload.pull_request.head.ref}\`
+# 🏗️ **Commit:** \`${context.payload.pull_request.head.sha.substring(0, 7)}\`
+
+# *This preview will be updated with every commit to this PR.*`
+#             })

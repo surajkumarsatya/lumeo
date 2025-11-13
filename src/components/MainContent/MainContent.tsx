@@ -29,7 +29,7 @@ import { InputGroupButton, InputGroupTextarea } from '@/components/ui/input-grou
 import { ArrowUpIcon } from 'lucide-react';
 
 import { IoSearchSharp } from 'react-icons/io5';
-import logo from '../../../public/images/nexlLogo.svg';
+// import logo from '../../../public/images/nexlLogo.svg';
 import Image from 'next/image';
 import ExampleText from '../ExampleText/ExampleText';
 
@@ -79,17 +79,23 @@ export default function MainContent() {
         <div className="flex flex-col gap-10 items-center w-[70%] mx-auto justify-center">
           <div className="text-right">
             <div className="">
-              <Image src={logo} alt="logo" className=" mx-auto" width={150} />
+              <Image
+                src="/images/nexlLogo.svg"
+                alt="logo"
+                className=" mx-auto"
+                width={150}
+                height={100}
+              />
             </div>
             <h1 className="leading-tight">
               Meet the <span className="font-bold text-purple-700">nex</span>t{' '}
               <span className="font-bold text-purple-700">l</span>
-              evel of intelligence Hi I am Prabhat Kumar
+              evel of intelligence
             </h1>
             <h4 className="text-purple-600 uppercase tracking-widest">
-              Think dexttt. Think <span className="font-bold">dexlll</span>.
+              Think next. Think <span className="font-bold">nexl</span>.
             </h4>
-            <p>I am fine ? What about you ? YYYY</p>
+            <p>New Build - 13/11/2025</p>
           </div>
 
           {/* <div className="grid w-full gap-2">
