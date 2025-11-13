@@ -80,10 +80,11 @@ export default function MainContent() {
           <div className="text-right">
             <div className="">
               <Image
-                src="../../../public/images/nexlLogo.svg"
+                src="/images/nexlLogo.svg"
                 alt="logo"
                 className=" mx-auto"
                 width={150}
+                height={100}
               />
             </div>
             <h1 className="leading-tight">
@@ -94,7 +95,7 @@ export default function MainContent() {
             <h4 className="text-purple-600 uppercase tracking-widest">
               Think next. Think <span className="font-bold">nexl</span>.
             </h4>
-            <p>Changed</p>
+            <p>New Build</p>
           </div>
 
           {/* <div className="grid w-full gap-2">
